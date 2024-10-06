@@ -13,6 +13,38 @@
 #define VERBOSE false
 
 using namespace std;
+// void Regex::writeGraphToFile(string path) const {
+//     // write graph in graphviz format
+//     ofstream file(path);
+//     if (!file.is_open()) {
+//         cerr << "Failed to open " << path << " for writing.\n";
+//         return;
+//     }
+    
+//     // Write the initial part of the graph format
+//     file << "digraph {\n";
+//     file << "\trankdir=LR\n";
+
+//     // First loop to write the labels for each node
+//     for (int i = 0; i < size; i++) {
+//         file << "\t" << i << " [label=\"" << i << ": " << pattern[i] << "\"];\n";
+//     }
+//     // add ending node
+//     file << "\t" << size << " [label=\"" << size << ": " << "end" << "\"];\n";
+//     for (int i = 0; i < size; i++) {
+//         int edge;
+//         for (int j = 0; j < 3; j++) {
+//             if (edges[3 * i + j] != MAXSIZE) {
+//                 edge = abs(edges[3 * i + j]);
+//                 string color = (edges[3 * i + j] < 0) ? "red" : "black";
+//                 file << "\t" << i << " -> " << edge << " [color=" << color << "];\n";
+//             }
+//         }
+//     }
+//     file << "}\n";
+//     file.close();
+//     cout << "Graph has been written to " << path << ".\n";
+// }
 void Regex::writeGraphToFile(string path) const {
     // write graph in graphviz format
     ofstream file(path);
@@ -20,22 +52,45 @@ void Regex::writeGraphToFile(string path) const {
         cerr << "Failed to open " << path << " for writing.\n";
         return;
     }
+
     
     // Write the initial part of the graph format
     file << "digraph {\n";
     file << "\trankdir=LR\n";
-
+    vector<int> dp(size+1,0);
     // First loop to write the labels for each node
+    int i = 0;
+    int count = 0;
+    string curr = "";
     for (int i = 0; i < size; i++) {
-        file << "\t" << i << " [label=\"" << i << ": " << pattern[i] << "\"];\n";
+        if (pattern[i] == '|' || pattern[i] == '*' || pattern[i] == '+' || pattern[i] == ')' || pattern[i] == '('){
+            if (curr != ""){
+                file << "\t" << count << " [label=\"" << count << ": " << curr << "\"];\n";
+                curr = "";
+                count++;
+                
+            }
+            file << "\t" << count << " [label=\"" << count << ": " << pattern[i] << "\"];\n";
+            dp[i] = count;
+            count++;
+        }else{
+            curr += pattern[i];
+            dp[i] = count;
+        }
     }
+    dp[size] = count;
+    // add ending node
+    file << "\t" << count << " [label=\"" << count << ": " << "end" << "\"];\n";
     for (int i = 0; i < size; i++) {
         int edge;
         for (int j = 0; j < 3; j++) {
             if (edges[3 * i + j] != MAXSIZE) {
                 edge = abs(edges[3 * i + j]);
+                if (dp[i] == dp[edge]){
+                    continue;
+                }
                 string color = (edges[3 * i + j] < 0) ? "red" : "black";
-                file << "\t" << i << " -> " << edge << " [color=" << color << "];\n";
+                file << "\t" << dp[i] << " -> " << dp[edge] << " [color=" << color << "];\n";
             }
         }
     }
@@ -43,14 +98,17 @@ void Regex::writeGraphToFile(string path) const {
     file.close();
     cout << "Graph has been written to " << path << ".\n";
 }
-
 // dfs
-void Regex::fillReachable(vector<int>& toDfs, unordered_set<int>& reachable) const {
+void Regex::fillReachable(vector<int>& toDfs, unordered_set<int>& reachable,bool& canReach) const {
     reachable.clear();
     while (!toDfs.empty()){
         int curr = toDfs.back();
         toDfs.pop_back();
-        if (reachable.find(curr) != reachable.end() || curr == size) continue;
+        if (curr == size){
+            canReach = true;
+            return;
+        }
+        if (reachable.find(curr) != reachable.end()) continue;
         reachable.insert(curr);
         // get all free visitings
         int edge;
@@ -194,9 +252,10 @@ bool Regex::match(const std::string& text) const {
     vector<int> toDfs;
     toDfs.push_back(0);
     unordered_set<int> reachable;
+    bool canReach = false;
     for (int i = 0; i < text.size(); i++){
         // dfs
-        fillReachable(toDfs,reachable);
+        fillReachable(toDfs,reachable,canReach);
         // if we can get to curr char good
         for (auto el: reachable){
             // cout << "reachable at " << i << ": " << pattern[el] << "\n";
@@ -213,7 +272,7 @@ bool Regex::match(const std::string& text) const {
             return false;
         }
     }
-    return true;
+    return canReach;
 }
 
 // Function to find all occurrences of the pattern in the text
@@ -225,9 +284,9 @@ std::vector<std::string> Regex::findAllMatches(const std::string& text) const {
 // usage
 int main(){
     // write very very long regex pattern
-    string regex = "a+";
+    string regex = "(a+b+c+d+|ocherif|samosamo)*yarrakye";
     Regex reg(regex);
-    cout << reg.match("yarrakyeaaabababaddddcccccorospucocuorospucocuyarrakyeaaayarrakye") << "\n";
+    cout << reg.match("ocherifsamosamoaaaaabbcdddocherif") << "\n";
     reg.writeGraphToFile("../grapht.dot");
     return 0;
 }
