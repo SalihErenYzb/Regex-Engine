@@ -99,13 +99,13 @@ void Regex::writeGraphToFile(string path) const {
     cout << "Graph has been written to " << path << ".\n";
 }
 // dfs
-void Regex::fillReachable(vector<int>& toDfs, unordered_set<int>& reachable,bool& canReach) const {
+void Regex::fillReachable(vector<int>& toDfs, unordered_set<int>& reachable) const {
     reachable.clear();
     while (!toDfs.empty()){
         int curr = toDfs.back();
         toDfs.pop_back();
         if (curr == size){
-            canReach = true;
+            reachable.insert(curr);
             return;
         }
         if (reachable.find(curr) != reachable.end()) continue;
@@ -255,9 +255,12 @@ bool Regex::match(const std::string& text) const {
     bool canReach = false;
     for (int i = 0; i < text.size(); i++){
         // dfs
-        fillReachable(toDfs,reachable,canReach);
+        fillReachable(toDfs,reachable);
         // if we can get to curr char good
         for (auto el: reachable){
+            if (el == size){
+                continue;
+            }
             // cout << "reachable at " << i << ": " << pattern[el] << "\n";
             if (pattern[el] == text[i] || pattern[el] == ANYC){
                 // add as if it has been added by doing el+1
@@ -272,7 +275,9 @@ bool Regex::match(const std::string& text) const {
             return false;
         }
     }
-    return canReach;
+   // if we can reach end return true
+    fillReachable(toDfs,reachable);
+    return reachable.find(size) != reachable.end();
 }
 
 // Function to find all occurrences of the pattern in the text
@@ -286,7 +291,7 @@ int main(){
     // write very very long regex pattern
     string regex = "(a+b+c+d+|ocherif|samosamo)*yarrakye";
     Regex reg(regex);
-    cout << reg.match("ocherifsamosamoaaaaabbcdddocherif") << "\n";
+    cout << reg.match("ocherifsamosamoaaaaabbcdddocherifyarrakye") << "\n";
     reg.writeGraphToFile("../grapht.dot");
     return 0;
 }

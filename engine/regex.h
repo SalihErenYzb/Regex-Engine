@@ -14,7 +14,12 @@ class Regex {
 public:
     char ENDING = '\1';
     char ANYC = '.';
-
+    char OR = '|';
+    char ZEROORMORE = '*';
+    char ONEORMORE = '+';
+    char OPEN = '(';
+    char CLOSE = ')';
+    
     // Constructor to initialize the pattern
     Regex(const std::string& regex);
 
@@ -29,7 +34,7 @@ private:
     int size;
     std::vector<char> pattern; // holds regex string's chars and extra accept char
     std::vector<int> edges; // holds both black and red edges as indexes to pattern; reds will be negative; every node at most 3 edge
-    void fillReachable(std::vector<int>& toDfs, std::unordered_set<int>& reachable,bool& canReach) const;
+    void fillReachable(std::vector<int>& toDfs, std::unordered_set<int>& reachable) const;
     // Compile the pattern
     void compilePattern(const std::string& regex);
 };
