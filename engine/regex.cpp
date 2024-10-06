@@ -10,20 +10,24 @@
 // TODO: Add function to find all matches 
 // TODO: Return the matching string which allows indexing for every () in the regex????
 
-#define VERBOSE true
-#define SAVEGRAPH true
-#ifdef SAVEGRAPH
-#include <fstream>
-#endif
+#define VERBOSE false
 
 using namespace std;
-void Regex::writeGraphToFile() const {
-    if (!SAVEGRAPH) return; // Only write if SAVEGRAPH is true
-
-    ofstream file("grapht.txt");
+void Regex::writeGraphToFile(string path) const {
+    // write graph in graphviz format
+    ofstream file(path);
     if (!file.is_open()) {
-        cerr << "Failed to open grapht.txt for writing.\n";
+        cerr << "Failed to open " << path << " for writing.\n";
         return;
+    }
+    
+    // Write the initial part of the graph format
+    file << "digraph {\n";
+    file << "\trankdir=LR\n";
+
+    // First loop to write the labels for each node
+    for (int i = 0; i < size; i++) {
+        file << "\t" << i << " [label=\"" << i << ": " << pattern[i] << "\"];\n";
     }
     for (int i = 0; i < size; i++) {
         int edge;
@@ -31,13 +35,15 @@ void Regex::writeGraphToFile() const {
             if (edges[3 * i + j] != MAXSIZE) {
                 edge = abs(edges[3 * i + j]);
                 string color = (edges[3 * i + j] < 0) ? "red" : "black";
-                file << i << " " << pattern[i] << " -> " << edge << " " << pattern[edge] << " [color=" << color << "];\n";
+                file << "\t" << i << " -> " << edge << " [color=" << color << "];\n";
             }
         }
     }
+    file << "}\n";
     file.close();
-    cout << "Graph has been written to grapht.txt.\n";
+    cout << "Graph has been written to " << path << ".\n";
 }
+
 // dfs
 void Regex::fillReachable(vector<int>& toDfs, unordered_set<int>& reachable) const {
     reachable.clear();
@@ -178,9 +184,6 @@ void Regex::compilePattern(const std::string& regex) {
                 cout << "\n\n";
             }
         }
-        if (SAVEGRAPH){
-            writeGraphToFile();
-        }
     } catch (const std::exception& e) {
         std::cerr << "Invalid regex pattern: " << e.what() << std::endl;
     }
@@ -221,13 +224,10 @@ std::vector<std::string> Regex::findAllMatches(const std::string& text) const {
 
 // usage
 int main(){
-    Regex reg("(A*B|AC)D");
-    string match = "ACD";
-    if (reg.match(match)){
-        // cout string with match
-        cout << "Matched: " << match << "\n";
-    }else{
-        cout << "No match found for: " << match << "\n";
-    }
+    // write very very long regex pattern
+    string regex = "a+";
+    Regex reg(regex);
+    cout << reg.match("yarrakyeaaabababaddddcccccorospucocuorospucocuyarrakyeaaayarrakye") << "\n";
+    reg.writeGraphToFile("../grapht.dot");
     return 0;
 }
