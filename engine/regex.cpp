@@ -7,6 +7,8 @@
 // TODO: Make code cleaner and more readable
 // TODO: Add support for [a-z] and [0-9] etc.
 // TODO: Add support for ^ and $ for start and end of string
+// TODO: Add support for \d, \w, \s etc.
+// TODO: Add support for ?, :, or {} etc.
 // TODO: Add function to find all matches 
 // TODO: Return the matching string which allows indexing for every () in the regex????
 
@@ -19,12 +21,10 @@ using namespace std;
 //     if (!file.is_open()) {
 //         cerr << "Failed to open " << path << " for writing.\n";
 //         return;
-//     }
-    
+//     }    
 //     // Write the initial part of the graph format
 //     file << "digraph {\n";
 //     file << "\trankdir=LR\n";
-
 //     // First loop to write the labels for each node
 //     for (int i = 0; i < size; i++) {
 //         file << "\t" << i << " [label=\"" << i << ": " << pattern[i] << "\"];\n";
@@ -68,7 +68,6 @@ void Regex::writeGraphToFile(string path) const {
                 file << "\t" << count << " [label=\"" << count << ": " << curr << "\"];\n";
                 curr = "";
                 count++;
-                
             }
             file << "\t" << count << " [label=\"" << count << ": " << pattern[i] << "\"];\n";
             dp[i] = count;
@@ -289,9 +288,9 @@ std::vector<std::string> Regex::findAllMatches(const std::string& text) const {
 // usage
 int main(){
     // write very very long regex pattern
-    string regex = "(a+b+c+d+|ocherif|samosamo)*yarrakye";
+    string regex = "(a+b+c+d+|patternnn|samosamo)*visually";
     Regex reg(regex);
-    cout << reg.match("ocherifsamosamoaaaaabbcdddocherifyarrakye") << "\n";
+    cout << reg.match("patternnnaaaaaaaaaaaaaabbcddddsamosamopatternnnvisually") << "\n";
     reg.writeGraphToFile("../grapht.dot");
     return 0;
 }

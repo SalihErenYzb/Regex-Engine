@@ -11,12 +11,12 @@ digraph {
 	8 [label="8: d"];
 	9 [label="9: +"];
 	10 [label="10: |"];
-	11 [label="11: ocherif"];
+	11 [label="11: patternnn"];
 	12 [label="12: |"];
 	13 [label="13: samosamo"];
 	14 [label="14: )"];
 	15 [label="15: *"];
-	16 [label="16: yarrakye"];
+	16 [label="16: visually"];
 	17 [label="17: )"];
 	18 [label="18: end"];
 	0 -> 1 [color=red];
