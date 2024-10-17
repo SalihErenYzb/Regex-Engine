@@ -15,36 +15,7 @@
 #define VERBOSE false
 
 using namespace std;
-// void Regex::writeGraphToFile(string path) const {
-//     // write graph in graphviz format
-//     ofstream file(path);
-//     if (!file.is_open()) {
-//         cerr << "Failed to open " << path << " for writing.\n";
-//         return;
-//     }    
-//     // Write the initial part of the graph format
-//     file << "digraph {\n";
-//     file << "\trankdir=LR\n";
-//     // First loop to write the labels for each node
-//     for (int i = 0; i < size; i++) {
-//         file << "\t" << i << " [label=\"" << i << ": " << pattern[i] << "\"];\n";
-//     }
-//     // add ending node
-//     file << "\t" << size << " [label=\"" << size << ": " << "end" << "\"];\n";
-//     for (int i = 0; i < size; i++) {
-//         int edge;
-//         for (int j = 0; j < 3; j++) {
-//             if (edges[3 * i + j] != MAXSIZE) {
-//                 edge = abs(edges[3 * i + j]);
-//                 string color = (edges[3 * i + j] < 0) ? "red" : "black";
-//                 file << "\t" << i << " -> " << edge << " [color=" << color << "];\n";
-//             }
-//         }
-//     }
-//     file << "}\n";
-//     file.close();
-//     cout << "Graph has been written to " << path << ".\n";
-// }
+
 void Regex::writeGraphToFile(string path) const {
     // write graph in graphviz format
     ofstream file(path);
@@ -63,7 +34,7 @@ void Regex::writeGraphToFile(string path) const {
     int count = 0;
     string curr = "";
     for (int i = 0; i < size; i++) {
-        if (pattern[i] == '|' || pattern[i] == '*' || pattern[i] == '+' || pattern[i] == ')' || pattern[i] == '('){
+        if (pattern[i] == OR || pattern[i+1] == ZEROORMORE || pattern[i+1] == ONEORMORE || pattern[i] == CLOSE || pattern[i] == OPEN){
             if (curr != ""){
                 file << "\t" << count << " [label=\"" << count << ": " << curr << "\"];\n";
                 curr = "";
@@ -138,8 +109,8 @@ void Regex::compilePattern(const std::string& regex) {
         size = regex.size()+2;
         // fill the pattern
         // for simplicity add paranthesis to start and end
-        pattern[0] = '(';
-        pattern[size-1] = ')';
+        pattern[0] = OPEN;
+        pattern[size-1] = CLOSE;
         for (int i = 1; i < size-1; i++){
             pattern[i] = regex[i-1];
         }
@@ -159,24 +130,24 @@ void Regex::compilePattern(const std::string& regex) {
         // pointers to *,+ are in second pos
         // pointers to back and pointers to next of | are in third
         unordered_set<char> red_points;
-        red_points.insert('(');
-        red_points.insert(')');
-        red_points.insert('+');
-        red_points.insert('*');
+        red_points.insert(OPEN);
+        red_points.insert(CLOSE);
+        red_points.insert(ONEORMORE);
+        red_points.insert(ZEROORMORE);
         // stack for ( and | 
         vector<int> st;
 
         for (int i = 0; i < size; i++){
             // first pos iteration
-            if (pattern[i] != '|'){
+            if (pattern[i] != OR){
                 if (red_points.find(pattern[i]) == red_points.end()){
                     edges[3*i] = i+1;
                     // red pointer
-                    if (pattern[i+1] == '*'){
+                    if (pattern[i+1] == ZEROORMORE){
                         edges[3*i+1] = -i-1;
                     }
                     // red back pointer
-                    if (pattern[i+1] == '+' || pattern[i+1] == '*'){
+                    if (pattern[i+1] == ONEORMORE || pattern[i+1] == ZEROORMORE){
                         edges[3*i+5] = -i;
                     }
                 }else{
@@ -184,13 +155,13 @@ void Regex::compilePattern(const std::string& regex) {
                 }
             }
             // stack pushes
-            if (pattern[i] == '('){
+            if (pattern[i] == OPEN){
                 st.push_back(i);
-            }else if (pattern[i] == '|'){
+            }else if (pattern[i] == OR){
                 st.push_back(-i);
             }
             // ) end
-            if (pattern[i] == ')'){
+            if (pattern[i] == CLOSE){
                 int last = -1;
                 int back;
                 while (st.back() < 0){
@@ -214,9 +185,9 @@ void Regex::compilePattern(const std::string& regex) {
                     edges[back*3+5] = -last;
                 }
                 // check for * and +
-                if (pattern[i+1] == '*' || pattern[i+1] == '+'){
+                if (pattern[i+1] == ZEROORMORE || pattern[i+1] == ONEORMORE){
                     edges[i*3+5] = -back;
-                    if (pattern[i+1] == '*'){
+                    if (pattern[i+1] == ZEROORMORE){
                         edges[back*3+2] = -i-1;
                     }
                 }
@@ -288,9 +259,11 @@ std::vector<std::string> Regex::findAllMatches(const std::string& text) const {
 // usage
 int main(){
     // write very very long regex pattern
-    string regex = "(a+b+c+d+|patternnn|samosamo)*visually";
+    string deneme = "şşçÇöÖğĞüÜıİ";
+    cout << deneme << "\n";
+    string regex = "(ampurna)+";
     Regex reg(regex);
-    cout << reg.match("patternnnaaaaaaaaaaaaaabbcddddsamosamopatternnnvisually") << "\n";
+    cout << reg.match("ampurnaaaaa") << "\n";
     reg.writeGraphToFile("../grapht.dot");
     return 0;
 }
