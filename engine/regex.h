@@ -7,20 +7,24 @@
 #include <vector>
 #include <queue>
 #include <unordered_set>
+#include <unordered_map>
 #include <fstream>
 #include <codecvt>
 #include <locale>
 
 class Regex {
 public:
-    // These can remain as char since they're ASCII
-    char ENDING = '\1';
-    char ANYC = '.';
-    char OR = '|';
-    char ZEROORMORE = '*';
-    char ONEORMORE = '+';
-    char OPEN = '(';
-    char CLOSE = ')';
+    // Represents literal characters using unicode private use area
+    char32_t LITERAL = U'\U000F0000';
+    char32_t LITERAL_START = '[';
+    char32_t LITERAL_END = ']';
+    char32_t ENDING = '\1';
+    char32_t ANYC = '.';
+    char32_t OR = '|';
+    char32_t ZEROORMORE = '*';
+    char32_t ONEORMORE = '+';
+    char32_t OPEN = '(';
+    char32_t CLOSE = ')';
     
     // Constructor takes a normal string
     Regex(const std::string& regex);
@@ -34,6 +38,11 @@ private:
     int size;
     std::vector<char32_t> pattern; // Internal representation uses char32_t
     std::vector<int> edges;
+
+    // maps indexes of literals to their values
+    std::unordered_map<int,std::unordered_set<char32_t>> literals;
+    // literal_str to be used only in VERBOSE mode
+    std::unordered_map<int,std::u32string> literals_str;
     
     void fillReachable(std::vector<int>& toDfs, std::unordered_set<int>& reachable) const;
     void compilePattern(const std::string& regexs);
