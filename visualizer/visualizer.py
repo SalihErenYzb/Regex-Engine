@@ -6,7 +6,7 @@ import sys
 os.environ["PATH"] += os.pathsep + "C:\\Program Files\\Graphviz\\bin\\"
 
 def create_digraph_from_dot(dot_file):
-    with open(dot_file, 'r') as f:
+    with open(dot_file, 'r',encoding="UTF-8") as f:
         dot_source = f.read()
     source = Source(dot_source, format='png')
     source.render('output', cleanup=True)  # Render the graph to a PNG file

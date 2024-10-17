@@ -8,10 +8,12 @@
 #include <queue>
 #include <unordered_set>
 #include <fstream>
-
+#include <codecvt>
+#include <locale>
 
 class Regex {
 public:
+    // These can remain as char since they're ASCII
     char ENDING = '\1';
     char ANYC = '.';
     char OR = '|';
@@ -20,23 +22,25 @@ public:
     char OPEN = '(';
     char CLOSE = ')';
     
-    // Constructor to initialize the pattern
+    // Constructor takes a normal string
     Regex(const std::string& regex);
 
-    // Function to check if the pattern matches the entire string
-    bool match(const std::string& text) const;
-
-    // Function to find all occurrences of the pattern in the text
+    // Functions take and return normal strings
+    bool match(const std::string& texts ) const;
     std::vector<std::string> findAllMatches(const std::string& text) const;
     void writeGraphToFile(std::string path = "/grapht.txt") const;
 
 private:
     int size;
-    std::vector<char> pattern; // holds regex string's chars and extra accept char
-    std::vector<int> edges; // holds both black and red edges as indexes to pattern; reds will be negative; every node at most 3 edge
+    std::vector<char32_t> pattern; // Internal representation uses char32_t
+    std::vector<int> edges;
+    
     void fillReachable(std::vector<int>& toDfs, std::unordered_set<int>& reachable) const;
-    // Compile the pattern
-    void compilePattern(const std::string& regex);
+    void compilePattern(const std::string& regexs);
+    
+    // Utility functions for internal use
+    static std::u32string utf8_to_utf32(const std::string& utf8_string);
+    static std::string utf32_to_utf8(const std::u32string& utf32_string);
 };
 
 #endif // REGEX_H

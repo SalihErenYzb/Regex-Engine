@@ -12,10 +12,18 @@
 // TODO: Add function to find all matches 
 // TODO: Return the matching string which allows indexing for every () in the regex????
 
-#define VERBOSE false
+#define VERBOSE true
 
 using namespace std;
+std::u32string Regex::utf8_to_utf32(const std::string& utf8_string) {
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+    return converter.from_bytes(utf8_string);
+}
 
+std::string Regex::utf32_to_utf8(const std::u32string& utf32_string) {
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> converter;
+    return converter.to_bytes(utf32_string);
+}
 void Regex::writeGraphToFile(string path) const {
     // write graph in graphviz format
     ofstream file(path);
@@ -34,17 +42,18 @@ void Regex::writeGraphToFile(string path) const {
     int count = 0;
     string curr = "";
     for (int i = 0; i < size; i++) {
+        string utf8_char = utf32_to_utf8(std::u32string(1, pattern[i]));
         if (pattern[i] == OR || pattern[i+1] == ZEROORMORE || pattern[i+1] == ONEORMORE || pattern[i] == CLOSE || pattern[i] == OPEN){
             if (curr != ""){
                 file << "\t" << count << " [label=\"" << count << ": " << curr << "\"];\n";
                 curr = "";
                 count++;
             }
-            file << "\t" << count << " [label=\"" << count << ": " << pattern[i] << "\"];\n";
+            file << "\t" << count << " [label=\"" << count << ": " << utf8_char << "\"];\n";
             dp[i] = count;
             count++;
         }else{
-            curr += pattern[i];
+            curr += utf8_char;
             dp[i] = count;
         }
     }
@@ -94,14 +103,15 @@ void Regex::fillReachable(vector<int>& toDfs, unordered_set<int>& reachable) con
 
 // Constructor to initialize the pattern
 Regex::Regex(const std::string& regex) {
-    pattern = vector<char>(MAXSIZE);
+    pattern = vector<char32_t>(MAXSIZE);
     edges = vector<int>(MAXSIZE*3,MAXSIZE);
     compilePattern(regex);
 }
 
 // Function to compile the pattern
-void Regex::compilePattern(const std::string& regex) {
+void Regex::compilePattern(const std::string& regexs) {
     // Implement your own regex engine.
+    u32string regex = utf8_to_utf32(regexs);
     try {
         if (regex.size() >= MAXSIZE){
             std::cerr << "Regex pattern is too long." << std::endl;
@@ -119,7 +129,8 @@ void Regex::compilePattern(const std::string& regex) {
         if (VERBOSE){
             cout << "pattern: ";
             for (int i = 0; i < size; i++){
-                cout << pattern[i];
+                string utf8_char = utf32_to_utf8(std::u32string(1, pattern[i]));
+                cout << utf8_char;
             }
             cout << "\n\n";
         }
@@ -197,7 +208,8 @@ void Regex::compilePattern(const std::string& regex) {
         // for verbose
         if (VERBOSE){
             for (int i = 0; i < size; i++){
-                cout << i << "th state: " << pattern[i] << "\n";
+                string utf8_char = utf32_to_utf8(std::u32string(1, pattern[i]));
+                cout << i << "th state: " << utf8_char << "\n";
                 cout << "edges: - ";
                 int edge;
                 for (int j = 0; j < 3; j++){
@@ -206,7 +218,8 @@ void Regex::compilePattern(const std::string& regex) {
                             cout << "red ";
                         }
                         edge = abs(edges[3*i+j]);
-                        cout << "pttrn[" << edge << "] = " << pattern[edge] << " - ";
+                        utf8_char = utf32_to_utf8(std::u32string(1, pattern[edge]));
+                        cout << "pttrn[" << edge << "] = " << utf8_char << " - ";
                     }                        
                 }
                 cout << "\n\n";
@@ -218,7 +231,8 @@ void Regex::compilePattern(const std::string& regex) {
 }
 
 // Function to check if the pattern matches the entire string
-bool Regex::match(const std::string& text) const {
+bool Regex::match(const std::string& texts) const {
+    u32string text = utf8_to_utf32(texts);
     vector<int> toDfs;
     toDfs.push_back(0);
     unordered_set<int> reachable;
@@ -228,6 +242,7 @@ bool Regex::match(const std::string& text) const {
         fillReachable(toDfs,reachable);
         // if we can get to curr char good
         for (auto el: reachable){
+            string utf8_char = utf32_to_utf8(std::u32string(1, pattern[el+1]));
             if (el == size){
                 continue;
             }
@@ -237,7 +252,7 @@ bool Regex::match(const std::string& text) const {
                 toDfs.push_back(el+1);
             }
             if (VERBOSE && (pattern[el] == text[i] || pattern[el] == ANYC)){
-                cout << "From " << text[i] << ", " << pattern[el+1] << " can be reached.\n"; 
+                cout << "From " << text[i] << ", " << utf8_char << " can be reached.\n"; 
             }
         }
         // if we cant reach return false
@@ -259,11 +274,9 @@ std::vector<std::string> Regex::findAllMatches(const std::string& text) const {
 // usage
 int main(){
     // write very very long regex pattern
-    string deneme = "şşçÇöÖğĞüÜıİ";
-    cout << deneme << "\n";
-    string regex = "(ampurna)+";
+    string regex = "ampurnaş+";
     Regex reg(regex);
-    cout << reg.match("ampurnaaaaa") << "\n";
+    cout << reg.match("ampurnaşşş") << "\n";
     reg.writeGraphToFile("../grapht.dot");
     return 0;
 }
