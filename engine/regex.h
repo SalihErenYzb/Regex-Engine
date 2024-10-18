@@ -11,6 +11,8 @@
 #include <fstream>
 #include <codecvt>
 #include <locale>
+#include <random>
+
 
 class Regex {
 public:
@@ -32,6 +34,7 @@ public:
     // Functions take and return normal strings
     bool match(const std::string& texts ) const;
     std::vector<std::string> findAllMatches(const std::string& text) const;
+    std::string makeRandomMatch() const;
     void writeGraphToFile(std::string path = "/grapht.txt") const;
 
 private:

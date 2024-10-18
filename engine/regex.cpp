@@ -11,7 +11,7 @@
 // TODO: Add function to find all matches 
 // TODO: Return the matching string which allows indexing for every () in the regex????
 
-#define VERBOSE true
+#define VERBOSE false
 
 using namespace std;
 std::u32string Regex::utf8_to_utf32(const std::string& utf8_string) {
@@ -279,7 +279,6 @@ bool Regex::match(const std::string& texts) const {
     vector<int> toDfs;
     toDfs.push_back(0);
     unordered_set<int> reachable;
-    bool canReach = false;
     for (int i = 0; i < text.size(); i++){
         // dfs
         fillReachable(toDfs,reachable);
@@ -325,6 +324,61 @@ bool Regex::match(const std::string& texts) const {
     return reachable.find(size) != reachable.end();
 }
 
+// Function to generate a random string that matches the pattern
+std::string Regex::makeRandomMatch() const {
+    vector<int> toDfs;
+    toDfs.push_back(0);
+    unordered_set<int> reachable;
+    u32string ans = u32string();
+    while (true){
+        fillReachable(toDfs,reachable);
+        // find a random value from reachable using <random>
+        bool added = false;
+        int random = rand() % reachable.size();
+        while (!added){
+            for (int el: reachable){
+                random--;
+                if (random > 0){
+                    continue;
+                }
+                if (el == size){
+                    int tmp = rand() % 2 || reachable.size() == 1;
+                    if (tmp || ans.size() > 10){
+                        return utf32_to_utf8(ans);
+                    }
+                    continue;
+                }
+                else if (pattern[el] == LITERAL){
+                    auto it = literals.find(el);
+                    if (it == literals.end()){
+                        throw std::runtime_error("Invalid regex pattern.");
+                    }
+                    int random = rand() % it->second.size();
+                    int i = 0;
+                    for (auto el: it->second){
+                        if (i == random){
+                            ans += el;
+                            break;
+                        }
+                        i++;
+                    }
+                }else if (pattern[el] == ANYC){
+                    // add random char
+                    ans += rand() % 256;
+                }else if (pattern[el] != ENDING && pattern[el] != OPEN && pattern[el] != CLOSE && pattern[el] != OR && pattern[el] != ZEROORMORE && pattern[el] != ONEORMORE){
+                    ans += pattern[el];
+                }else{
+                    continue; 
+                }
+                added = true;
+                toDfs.push_back(el+1);
+                break;
+            }        
+        }
+    }
+    return utf32_to_utf8(ans);
+}
+
 // Function to find all occurrences of the pattern in the text
 std::vector<std::string> Regex::findAllMatches(const std::string& text) const {
     return vector<string>(1,"");
@@ -334,9 +388,11 @@ std::vector<std::string> Regex::findAllMatches(const std::string& text) const {
 // usage
 int main(){
     // write very very long regex pattern
-    string regex = "ampu[abcd]rn";
+    string regex = "(Al|L|al)p[3e]r[e3]n babadır";
     Regex reg(regex);
-    cout << reg.match("ampucrn") << "\n";
-    reg.writeGraphToFile("../grapht.dot");
+    for (int i = 0; i < 10; i++){
+        string text = reg.makeRandomMatch();
+        cout << text << "\n";
+    }
     return 0;
 }
